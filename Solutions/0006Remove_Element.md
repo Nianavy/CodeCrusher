@@ -1,3 +1,4 @@
+https://leetcode.cn/problems/remove-element
 
 ### think:
 
@@ -28,5 +29,4 @@ public:
         return left;
     }
 };
-
 ```
