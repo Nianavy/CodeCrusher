@@ -45,5 +45,5 @@ SELECT name, REPLACE(capital, name, '') AS ext FROM world WHERE capital LIKE CON
 
 
 
-above context from [SELECT names/zh - SQLZoo](https://www.sqlzoo.net/wiki/SELECT_names/zh)
+above content from [SELECT names/zh - SQLZoo](https://www.sqlzoo.net/wiki/SELECT_names/zh)
 

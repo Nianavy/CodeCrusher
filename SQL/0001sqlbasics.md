@@ -45,5 +45,5 @@ SELECT name, area From world WHERE area BETWEEN 200000 AND 250000;
 
 
 
-above context from [SELECT basics/zh - SQLZoo](https://www.sqlzoo.net/wiki/SELECT_basics/zh)
+above content from [SELECT basics/zh - SQLZoo](https://www.sqlzoo.net/wiki/SELECT_basics/zh)
 

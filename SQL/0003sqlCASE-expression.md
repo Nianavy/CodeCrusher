@@ -65,4 +65,4 @@ FROM world;
 
 
 
- above context from [SQLZoo:SELECT from WORLD Tutorial/zh - SQLZoo](https://www.sqlzoo.net/wiki/SQLZoo:SELECT_from_WORLD_Tutorial/zh)
+ above content from [SQLZoo:SELECT from WORLD Tutorial/zh - SQLZoo](https://www.sqlzoo.net/wiki/SQLZoo:SELECT_from_WORLD_Tutorial/zh)
