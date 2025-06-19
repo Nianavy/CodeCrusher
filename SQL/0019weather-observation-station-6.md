@@ -10,3 +10,9 @@ WHERE
     CITY LIKE 'o%' OR
     CITY LIKE 'u%';
 ```
+optimization version
+```SQL
+SELECT DISTINCT city
+FROM station
+WHERE city REGEXP '^[aeiou]';
+```
