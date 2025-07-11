@@ -1,0 +1,8 @@
+https://www.hackerrank.com/challenges/earnings-of-employees
+
+```SQL
+SELECT MAX(SALARY*MONTHS) AS EARNINGS, COUNT(NAME) FROM EMPLOYEE
+GROUP BY (SALARY*MONTHS)
+ORDER BY (SALARY*MONTHS) DESC
+LIMIT 1;
+```
