@@ -5,6 +5,7 @@ https://www.acwing.com/problem/content/3722/
 Disjoint-set data structure
 ```
 
+### Ways
 ```C++
 #include <cstdio>
 #include <cstring>
