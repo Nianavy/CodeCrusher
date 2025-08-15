@@ -4,7 +4,7 @@ https://www.hackerrank.com/challenges/solve-me-first
 just return two value's sum.
 ```
 
-```C++
+```C
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
