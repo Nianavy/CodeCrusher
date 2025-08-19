@@ -7,7 +7,7 @@ reverse whole,
 then reverse first half.
 ```
 
-```c
+```c++
 #include <cstdio>
 #include <cstring>
 #include <algorithm>
