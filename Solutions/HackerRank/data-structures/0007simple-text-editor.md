@@ -1,8 +1,8 @@
 https://www.hackerrank.com/challenges/simple-text-editor
 
 ```txt
-Use a stack to save lengths before edits,
-enabling append, delete, print, and undo.
+Use a stack to save the string length before edits,
+enabling undo for append and delete operations — provided the original characters are not overwritten.
 ```
 
 ```c
