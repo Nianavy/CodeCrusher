@@ -5,7 +5,6 @@ Outer loop for rows,
 inner loops print spaces and hashes to form a right-aligned staircase.
 ```
 
-
 ```c
 #include <assert.h>
 #include <ctype.h>
