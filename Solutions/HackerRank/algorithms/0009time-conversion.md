@@ -4,7 +4,7 @@ https://www.hackerrank.com/challenges/time-conversion
 convert 12-hour time to 24-hour format, correctly handling 12 AM/PM edge cases.
 ```
 
-```c++
+```c
 #include <assert.h>
 #include <ctype.h>
 #include <limits.h>
