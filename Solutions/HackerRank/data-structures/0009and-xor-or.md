@@ -6,7 +6,7 @@ to the left and right of each array element,
 then calculating the maximum XOR value from these pairs.
 ```
 
-```c++
+```c
 #include <assert.h>
 #include <ctype.h>
 #include <limits.h>

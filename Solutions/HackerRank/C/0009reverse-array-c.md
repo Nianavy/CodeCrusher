@@ -5,7 +5,7 @@ using two pointers to iterate from both ends of the array towards the middle,
 swapping elements in place to reverse the array.
 ```
 
-```c++
+```c
 #include <stdio.h>
 #include <stdlib.h>
 
