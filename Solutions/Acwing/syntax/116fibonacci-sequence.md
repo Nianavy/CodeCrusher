@@ -2,20 +2,16 @@ https://www.acwing.com/problem/content/19/
 
 ```c++
 class Solution {
+  
 static const int N = 100;
 int M[N];
-bool IM;
+
 public:
-    Solution(): IM(false) {
-      memset(M, -1, sizeof M);
-      IM = true;
-    }
+    Solution() { memset(M, -1, sizeof M); }
     
     int Fibonacci(int n) {
       if (M[n] != -1) return M[n];
-      if (n == 0) { M[n] = 0; return 0; }
-      if (n <= 2) { M[n] = 1; return 1; }
-      return M[n] = Fibonacci(n - 1) + Fibonacci(n - 2);
+      return M[n] = n == 0 ? 0 : n <= 2 ? 1 : Fibonacci(n - 1) + Fibonacci(n - 2);
     }
 };
 ```
