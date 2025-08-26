@@ -60,6 +60,7 @@ int main() {
     int *indexes = twoSum(nums, size, target, &cnt);
     if (indexes) printf("%d %d\n", indexes[0], indexes[1]);
     else printf("Not found\n");
+    free(indexes);
     return 0;
 }
 
