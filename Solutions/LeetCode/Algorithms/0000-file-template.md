@@ -6,9 +6,15 @@
 
 # Answer
 
+> solution
+
+
+
 ### Way Of C
 
 > think
+
+
 
 > source code
 
