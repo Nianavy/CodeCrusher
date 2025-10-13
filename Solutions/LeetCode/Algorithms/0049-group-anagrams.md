@@ -8,154 +8,90 @@
 
 > solution
 
-解决“字母异位词分组”问题的最佳实践是：**选择一种高效的字符串“规范化”方法来生成哈希键，然后将原始字符串存储到以该键为索引的哈希表中。**
+**通过对每个字符串进行字母排序来生成其唯一的规范化键，然后利用哈希表将具有相同键的原始字符串收集在一起。**
 
-1.  **第一步永远是简化数据结构。**
-    *   **思想：** 哈希表是核心，它提供了 `O(1)` 平均时间复杂度的查找、插入和删除。
-    *   **实现：**
-        *   C++ 使用 `std::unordered_map<std::string, std::vector<std::string>>`。键是规范化字符串，值是原始字符串的列表。
-        *   C 语言需要手动实现哈希表（通常采用分离链表法），并通过 `struct` 来组织键和值。
+#### **通用解决思路步骤：**
 
-2.  **消除所有特殊情况，将它们融入通用逻辑。**
-    *   **空字符串数组：** 如果输入 `strs` 是空的，直接返回一个空的列表。
-    *   **字符串为空：** 空字符串本身也是异位词，可以作为分组。
-    *   **通用性：** 规范化键的方法应适用于所有字符串，无论其内容如何。
+1.  **处理特殊情况：**
+    *   如果输入字符串数组为空 (`strsSize == 0` 或 `strs.empty()`)，则返回一个空的结果集。
 
-3.  **用最直接、最清晰（即使有时看起来“笨拙”）的方式实现。**
-    *   **核心：键生成策略**
-        有两种主要的有效方法来生成规范化键：
-        *   **a. 排序字符串法：**
-            *   **思想：** 对每个字符串进行字母排序。例如 "eat" -> "aet"，"tea" -> "aet"。排序后的字符串就是键。
-            *   **优点：** 简单直观。
-            *   **缺点：** 每次排序的时间复杂度为 `O(K log K)`（K 为字符串平均长度），总时间复杂度 `O(N * K log K)`。
-        *   **b. 字符计数法：** （这是我们最终在 C++ 和 C 方案中选择的优化方法）
-            *   **思想：** 统计每个字符串中，26 个小写字母（a-z）出现的频率。然后将这些频率转换成一个唯一的字符串作为键。例如 "eat" -> "a1e1t1" 或 "a1#e1#t1"。
-            *   **优点：** 统计频率的时间复杂度为 `O(K)`，键字符串构建的时间复杂度也为 `O(K)`（或 `O(1)` 如果键是固定长度的数组）。总时间复杂度 `O(N * K)`，通常比排序法更快。
-            *   **实现细节（C++ / C）：**
-                *   使用一个 `int counts[26]` 数组来统计频率。
-                *   构建键字符串时，遍历 `counts` 数组。对于每个字母 `char c = 'a' + i`，将其和它的频率 `counts[i]` 拼接起来。例如 `key_builder.push_back(c); key_builder += std::to_string(counts[i]);` (C++) 或 `sprintf` / `append_int_to_key` (C)。
-    *   **哈希表的填充：**
-        *   对于 `strs` 中的每个原始字符串 `str`：
-            1.  生成其规范化键 `key`。
-            2.  将 `str` 添加到 `hash_table[key]` 对应的 `std::vector<std::string>` (C++) 或 `AnagramNode` (C) 中。
-    *   **结果收集：**
-        *   遍历哈希表，将所有 `value` 部分（即各个异位词组的列表）收集起来，形成最终的 `vector<vector<string>>` (C++) 或 `char*** lists` (C)。
+2.  **遍历并生成键：**
+    *   对于 `strs` 中的每一个原始字符串 `S`：
+        *   创建一个 `S` 的副本。
+        *   对这个副本进行字母排序。例如，`"eat"` 排序后变成 `"aet"`，`"tea"` 排序后也变成 `"aet"`。
+        *   这个排序后的字符串 `Key_S` 就是该异位词组的唯一键。
+    *   **时间成本：** 对于每个长度为 `K` 的字符串，排序需要 `O(K log K)`。如果有 `N` 个字符串，这一步的总时间是 `O(N * K log K)`。
 
-4.  **确保零破坏性，向后兼容是最高优先级。**
-    *   所有方案都只读取原始输入 `strs` 数组，不会对其进行修改。
-    *   **C 语言的内存管理：** 这是 C 语言版本的最大挑战。必须手动 `malloc` 哈希表的结构体、链表节点、键字符串、索引数组、最终结果 `char*** lists` 和 `int** returnColumnSizes`，并且**必须**在函数返回前释放所有临时分配的内存（例如临时键字符串、哈希表结构本身）。调用者必须 `free` 返回的 `lists` 和 `returnColumnSizes`，以及 `lists` 中的每个子 `char**`。这是 C 语言接口的规范。
-    *   **C++ 的内存管理：** `std::unordered_map` 和 `std::vector<std::string>` 容器负责自动管理内存，使得代码简洁且不易出错。
+3.  **哈希表分组：**
+    *   初始化一个哈希表。
+    *   使用 `Key_S` 作为哈希表的键，将原始字符串 `S` 添加到 `hash_table[Key_S]` 对应的列表中。
+    *   如果 `Key_S` 是第一次出现，哈希表会自动为它创建一个新的列表。
+    *   **时间成本：** 哈希表的平均插入和查找操作为 `O(1)` (不计键生成时间)。
 
-**总结来说，解决“字母异位词分组”的核心是为异位词找到一个稳定的、唯一的标识符（键），并通过哈希表进行高效分组。字符计数法通常比排序法更高效，并且 C++ 的 STL 提供了极其方便的哈希表实现，而 C 语言则需要更精细的手动内存管理和哈希表实现。**
+4.  **收集结果：**
+    *   遍历哈希表，将所有键对应的列表（即异位词组）收集起来，形成最终的二维结果集。
+
+#### **C++ 实现 ：**
+
+*   **实现特点：**
+    *   利用 C++ STL 的强大功能：`std::string`、`std::vector` 和 `std::unordered_map`。
+    *   `std::string nstr = str;` 方便地创建副本。
+    *   `std::sort(nstr.begin(), nstr.end());` 对字符串副本进行排序。
+    *   `hash[nstr].push_back(str);` 简洁地将原始字符串添加到哈希表中相应键的值列表中。
+    *   自动处理内存管理、哈希冲突和容器扩容。
+*   **Linus 的评价：** **🟢 好品味。** 这是 C++ 处理此类问题的典范，代码清晰、简洁、高效且安全。
+
+#### **C 语言实现：**
+
+*   **实现特点：**
+    *   **手动哈希表：** 手动定义 `AnagramGroup_C` 结构体作为哈希表的槽位，并实现哈希函数 (`BKDRHash_c`)。
+    *   **冲突解决：** 采用**开放寻址法**（具体是线性探测）处理哈希冲突。当哈希到已占用槽位时，会探测下一个位置。
+    *   **动态数组：** 每个哈希槽内部的 `original_indices` 数组是动态分配的，需要手动 `malloc` 和 `realloc` 进行扩容。
+    *   **字符串管理：** 排序键需要手动 `malloc` 副本 (`sorted_strs_keys`)，并在哈希表中存储键时再次 `malloc` 拷贝。
+    *   **严格的内存管理：** 代码中包含大量的 `malloc`、`free` 调用和 `NULL` 检查，确保程序在内存不足或结束时能够正确地分配和释放所有资源，避免内存泄漏和崩溃。这是 C 语言实现的复杂性和挑战所在。
+*   **Linus 的评价：** 这个版本虽然因手动内存管理而显得冗长，但它是一个**健壮且正确的 C 语言实现**。它展示了在没有高级语言特性下，如何系统地构建哈希表和管理内存。
+
+**最终总结：**
+两种语言的实现都殊途同归地应用了**“排序字符串为键 + 哈希表分组”**的核心算法。C++ 凭借其高级抽象和强大的标准库，使得这一过程变得极其简洁和安全；而 C 语言则通过底层的内存控制和手动数据结构实现，展示了在没有这些抽象的情况下，如何系统而健壮地解决问题。C 语言的实现虽然复杂，但它符合 C 语言直接操作内存的哲学，并且在正确实现的前提下，能够提供可控的性能。
 
 ### Way Of C
 
 > source code
 
 ```c
-// 定义一个链表节点，用于处理哈希冲突和存储异位词索引
-typedef struct AnagramNode {
-    char* sorted_key;        // 规范化后的字符串键
-    int* original_indices;   // 存储原始字符串在 strs 数组中的索引
-    int count;               // 当前链表节点存储的异位词数量
-    int capacity;            // original_indices 数组的容量
-    struct AnagramNode* next; // 链表指针，处理冲突
-} AnagramNode;
-
-// 定义哈希表结构
+// 哈希表节点结构体
 typedef struct {
-    AnagramNode** buckets;   // 哈希桶数组
-    int size;                // 哈希表大小
-    int num_groups;          // 实际的异位词组数量
-} AnagramHashTable;
+    char *sorted_key;       // 排序后的字符串作为键
+    int *original_indices;  // 动态数组，存储原始字符串在 strs 数组中的索引
+    int count;              // 当前异位词组中的字符串数量
+    int capacity;           // original_indices 数组的当前容量
+} AnagramGroup_C;
 
-// 初始化哈希表
-static AnagramHashTable* createHashTable(int initialSize) {
-    AnagramHashTable* ht = (AnagramHashTable*)malloc(sizeof(AnagramHashTable));
-    if (ht == NULL) { fprintf(stderr, "malloc failed\n"); exit(EXIT_FAILURE); }
-    ht->size = initialSize;
-    ht->num_groups = 0;
-    ht->buckets = (AnagramNode**)calloc(initialSize, sizeof(AnagramNode*)); // calloc 初始化为 NULL
-    if (ht->buckets == NULL) { free(ht); fprintf(stderr, "malloc failed\n"); exit(EXIT_FAILURE); }
-    return ht;
+// 比较函数，用于 qsort 排序字符串中的字符
+static int compare_chars_c(const void *a, const void *b)
+{
+    return *(const char *) a - *(const char *) b;
 }
 
-// BKDRHash 函数（或替换为其他更优哈希函数）
-static unsigned int BKDRHash(const char *s, int htSize) {
+// BKDRHash 函数（通用哈希函数，用于 char* 键）
+static unsigned int BKDRHash_c(const char *s, int htSize)
+{
     unsigned int hash = 0;
-    unsigned int seed = 131; // 更好的种子
+    unsigned int seed = 131; // 经验证较好的种子
     while (*s != '\0') {
         hash = hash * seed + (*s++);
     }
     return hash % htSize;
 }
 
-// 插入或查找哈希表中的键
-static AnagramNode* findOrCreateNode(AnagramHashTable* ht, const char* key) {
-    unsigned int hash_val = BKDRHash(key, ht->size);
-    AnagramNode* current = ht->buckets[hash_val];
-
-    // 线性查找链表，处理冲突
-    while (current != NULL) {
-        if (strcmp(current->sorted_key, key) == 0) {
-            return current; // 找到匹配的键
-        }
-        current = current->next;
+// 释放单个 AnagramGroup_C 节点内部的内存
+static void freeAnagramGroup_C(AnagramGroup_C* group) {
+    if (group->sorted_key) {
+        free(group->sorted_key);
     }
-
-    // 未找到，创建新节点
-    AnagramNode* newNode = (AnagramNode*)malloc(sizeof(AnagramNode));
-    if (newNode == NULL) { fprintf(stderr, "malloc failed\n"); exit(EXIT_FAILURE); }
-    
-    newNode->sorted_key = (char*)malloc(strlen(key) + 1);
-    if (newNode->sorted_key == NULL) { free(newNode); fprintf(stderr, "malloc failed\n"); exit(EXIT_FAILURE); }
-    strcpy(newNode->sorted_key, key);
-    
-    newNode->original_indices = (int*)malloc(10 * sizeof(int)); // 初始容量10
-    if (newNode->original_indices == NULL) { free(newNode->sorted_key); free(newNode); fprintf(stderr, "malloc failed\n"); exit(EXIT_FAILURE); }
-    newNode->capacity = 10;
-    newNode->count = 0;
-    
-    // 将新节点添加到链表头部
-    newNode->next = ht->buckets[hash_val];
-    ht->buckets[hash_val] = newNode;
-    ht->num_groups++; // 新增一个异位词组
-    
-    return newNode;
-}
-
-// 释放哈希表内存
-static void freeHashTable(AnagramHashTable* ht) {
-    for (int i = 0; i < ht->size; ++i) {
-        AnagramNode* current = ht->buckets[i];
-        while (current != NULL) {
-            AnagramNode* next = current->next;
-            free(current->sorted_key);
-            free(current->original_indices);
-            free(current);
-            current = next;
-        }
+    if (group->original_indices) {
+        free(group->original_indices);
     }
-    free(ht->buckets);
-    free(ht);
-}
-
-// 将整数转换为字符串，追加到 key_builder
-// C 语言中没有 std::to_string，需要手动实现或使用 sprintf
-static void append_int_to_key(char** key_builder_ptr, int* current_key_len_ptr, int* current_key_capacity_ptr, int val) {
-    // 假设 val 不会非常大，10 位数足以
-    char num_str[12]; // 10 digits + sign + null terminator
-    sprintf(num_str, "%d", val);
-    int num_str_len = strlen(num_str);
-
-    // 检查容量，如果不够就扩容
-    if (*current_key_len_ptr + num_str_len + 1 > *current_key_capacity_ptr) {
-        *current_key_capacity_ptr *= 2; // 双倍扩容
-        *key_builder_ptr = (char*)realloc(*key_builder_ptr, *current_key_capacity_ptr);
-        if (*key_builder_ptr == NULL) { fprintf(stderr, "realloc failed\n"); exit(EXIT_FAILURE); }
-    }
-    strcat(*key_builder_ptr, num_str);
-    *current_key_len_ptr += num_str_len;
 }
 
 /**
@@ -163,87 +99,159 @@ static void append_int_to_key(char** key_builder_ptr, int* current_key_len_ptr, 
  * The sizes of the arrays are returned as *returnColumnSizes array.
  * Note: Both returned array and *returnColumnSizes array must be malloced, assume caller calls free().
  */
-char*** groupAnagrams(char** strs, int strsSize, int* returnSize, int** returnColumnSizes) {
-    // 处理空输入
+char*** groupAnagrams(char** strs, int strsSize, int* returnSize, int** returnColumnSizes)
+{
+    // 1. 处理空输入
     if (strsSize == 0) {
         *returnSize = 0;
         *returnColumnSizes = NULL;
         return NULL;
     }
 
-    // 1. 初始化哈希表 (初始大小可以根据 strsSize 调整，例如 2 * strsSize)
-    // 选择一个素数作为哈希表大小可以减少冲突，这里简单地用 2 * strsSize
-    int initial_hash_table_size = strsSize > 0 ? strsSize * 2 : 11; // 最小为11
-    AnagramHashTable* ht = createHashTable(initial_hash_table_size);
+    // 2. 初始化哈希表
+    // 采用开放寻址法（线性探测）。哈希表大小选择一个比 strsSize 大的素数，减少冲突。
+    // 这里选择一个相对较大的素数作为初始容量，以降低冲突率。
+    // 如果 strsSize 非常大，可能需要实现动态扩容。
+    int hash_table_capacity = strsSize * 2; // 至少是 strsSize 的两倍
+    if (hash_table_capacity < 101) hash_table_capacity = 101; // 确保最小容量
+    
+    AnagramGroup_C* ht = (AnagramGroup_C*)calloc(hash_table_capacity, sizeof(AnagramGroup_C)); // calloc 初始化为 0
+    if (ht == NULL) { fprintf(stderr, "malloc failed for hash table\n"); exit(EXIT_FAILURE); }
 
-    // 2. 遍历输入字符串，为每个字符串生成键并插入哈希表
-    for (int i = 0; i < strsSize; ++i) {
-        // 字符计数法生成键
-        int counts[26] = { 0 };
-        for (int k = 0; strs[i][k] != '\0'; ++k) {
-            counts[strs[i][k] - 'a']++;
+    // 3. 遍历输入字符串，生成排序键，并填充哈希表
+    // sorted_strs_keys 数组用于存储每个 strs[i] 的副本，并在副本上排序，避免修改原始字符串
+    // 并在后面用于释放临时分配的排序键内存。
+    char **sorted_strs_keys = (char**)malloc(strsSize * sizeof(char *));
+    if (sorted_strs_keys == NULL) { free(ht); fprintf(stderr, "malloc failed for sorted_strs_keys array\n"); exit(EXIT_FAILURE); }
+
+    int num_unique_groups = 0; // 记录最终异位词组的数量
+
+    for (int i = 0; i < strsSize; i++) {
+        int len = strlen(strs[i]);
+        sorted_strs_keys[i] = (char*)malloc(len + 1); // 为当前字符串的排序副本分配内存
+        if (sorted_strs_keys[i] == NULL) { 
+            // 内存分配失败，释放之前分配的所有 sorted_strs_keys 和 ht
+            for(int k=0; k<i; ++k) free(sorted_strs_keys[k]);
+            free(sorted_strs_keys);
+            for(int k=0; k<hash_table_capacity; ++k) freeAnagramGroup_C(&ht[k]); // 释放已初始化的哈希组
+            free(ht);
+            fprintf(stderr, "malloc failed for sorted_strs_keys[%d]\n", i); 
+            exit(EXIT_FAILURE); 
         }
+        strcpy(sorted_strs_keys[i], strs[i]);
+        qsort(sorted_strs_keys[i], len, sizeof(char), compare_chars_c); // 排序字符串作为键
 
-        // 构建键字符串 (例如 "a1b0c2d0..." )
-        // 动态构建键字符串，预分配一些空间
-        int current_key_capacity = 26 * 2 + 1; // 26 chars + 26 digits + null terminator
-        char* key_builder = (char*)malloc(current_key_capacity);
-        if (key_builder == NULL) { freeHashTable(ht); fprintf(stderr, "malloc failed\n"); exit(EXIT_FAILURE); }
-        key_builder[0] = '\0'; // 初始化为空字符串
-        int current_key_len = 0;
+        unsigned int hash_val = BKDRHash_c(sorted_strs_keys[i], hash_table_capacity);
+        int current_pos = hash_val;
+        bool found = false;
 
-        for (int k = 0; k < 26; ++k) {
-            // 先追加字符 'a' + k
-            char char_to_append[2] = { (char)('a' + k), '\0' };
-            append_int_to_key(&key_builder, &current_key_len, &current_key_capacity, char_to_append[0]);
-            
-            // 再追加频率
-            append_int_to_key(&key_builder, &current_key_len, &current_key_capacity, counts[k]);
+        // 线性探测处理哈希冲突
+        while (ht[current_pos].sorted_key != NULL) {
+            if (strcmp(ht[current_pos].sorted_key, sorted_strs_keys[i]) == 0) {
+                found = true;
+                break; // 找到匹配的键
+            }
+            current_pos = (current_pos + 1) % hash_table_capacity; // 探测下一个位置
+            if (current_pos == hash_val) { // 绕了一圈，哈希表已满或无法找到
+                // 这意味着哈希表太小，无法处理所有元素。在实际应用中，这里应该触发哈希表扩容。
+                // 为了简化，这里直接退出，表示哈希表设计有问题。
+                fprintf(stderr, "Hash table full or unable to find key, capacity too small.\n");
+                for(int k=0; k<=i; ++k) if(sorted_strs_keys[k]) free(sorted_strs_keys[k]); free(sorted_strs_keys);
+                for(int k=0; k<hash_table_capacity; ++k) freeAnagramGroup_C(&ht[k]);
+                free(ht);
+                exit(EXIT_FAILURE);
+            }
         }
-
-        // 查找或创建哈希表节点
-        AnagramNode* node = findOrCreateNode(ht, key_builder);
         
-        // 确保 original_indices 数组容量足够
-        if (node->count >= node->capacity) {
-            node->capacity *= 2; // 双倍扩容
-            node->original_indices = (int*)realloc(node->original_indices, node->capacity * sizeof(int));
-            if (node->original_indices == NULL) { free(key_builder); freeHashTable(ht); fprintf(stderr, "realloc failed\n"); exit(EXIT_FAILURE); }
+        // 如果是新组，初始化其结构
+        if (!found) {
+            // 拷贝排序键到哈希表中的 AnagramGroup_C 结构
+            ht[current_pos].sorted_key = (char*)malloc(len + 1); 
+            if (ht[current_pos].sorted_key == NULL) { 
+                for(int k=0; k<=i; ++k) if(sorted_strs_keys[k]) free(sorted_strs_keys[k]); free(sorted_strs_keys);
+                for(int k=0; k<hash_table_capacity; ++k) freeAnagramGroup_C(&ht[k]);
+                free(ht);
+                fprintf(stderr, "malloc failed for ht[current_pos].sorted_key\n"); exit(EXIT_FAILURE);
+            }
+            strcpy(ht[current_pos].sorted_key, sorted_strs_keys[i]);
+            
+            ht[current_pos].capacity = 4; // original_indices 初始容量
+            ht[current_pos].original_indices = (int*)malloc(ht[current_pos].capacity * sizeof(int));
+            if (ht[current_pos].original_indices == NULL) { 
+                free(ht[current_pos].sorted_key);
+                for(int k=0; k<=i; ++k) if(sorted_strs_keys[k]) free(sorted_strs_keys[k]); free(sorted_strs_keys);
+                for(int k=0; k<hash_table_capacity; ++k) freeAnagramGroup_C(&ht[k]);
+                free(ht);
+                fprintf(stderr, "malloc failed for ht[current_pos].original_indices\n"); exit(EXIT_FAILURE);
+            }
+            ht[current_pos].count = 0;
+            num_unique_groups++; // 新增一个异位词组
         }
-        node->original_indices[node->count++] = i; // 存储原始索引
-
-        free(key_builder); // 释放临时键字符串
+        
+        // 确保 original_indices 数组容量足够，并存储原始索引
+        if (ht[current_pos].count == ht[current_pos].capacity) {
+            ht[current_pos].capacity *= 2; // 双倍扩容
+            ht[current_pos].original_indices = (int*)realloc(ht[current_pos].original_indices, ht[current_pos].capacity * sizeof(int));
+            if (ht[current_pos].original_indices == NULL) { 
+                // realloc 失败，释放所有资源
+                for(int k=0; k<=i; ++k) if(sorted_strs_keys[k]) free(sorted_strs_keys[k]); free(sorted_strs_keys);
+                for(int k=0; k<hash_table_capacity; ++k) freeAnagramGroup_C(&ht[k]);
+                free(ht);
+                fprintf(stderr, "realloc failed for original_indices\n"); exit(EXIT_FAILURE); 
+            }
+        }
+        ht[current_pos].original_indices[ht[current_pos].count++] = i; // 存储原始字符串索引
     }
 
-    // 3. 收集结果
-    *returnSize = ht->num_groups;
-    char*** lists = (char***)malloc(ht->num_groups * sizeof(char**));
-    if (lists == NULL) { freeHashTable(ht); fprintf(stderr, "malloc failed\n"); exit(EXIT_FAILURE); }
+    // 4. 收集结果
+    *returnSize = num_unique_groups;
+    char*** lists = (char***)malloc(num_unique_groups * sizeof(char**));
+    if (lists == NULL) { 
+        // 内存分配失败，释放所有资源
+        for(int k=0; k<strsSize; ++k) if(sorted_strs_keys[k]) free(sorted_strs_keys[k]); free(sorted_strs_keys);
+        for(int k=0; k<hash_table_capacity; ++k) freeAnagramGroup_C(&ht[k]); free(ht);
+        fprintf(stderr, "malloc failed for lists\n"); exit(EXIT_FAILURE); 
+    }
     
-    *returnColumnSizes = (int*)malloc(ht->num_groups * sizeof(int));
-    if (*returnColumnSizes == NULL) { free(lists); freeHashTable(ht); fprintf(stderr, "malloc failed\n"); exit(EXIT_FAILURE); }
+    *returnColumnSizes = (int*)malloc(num_unique_groups * sizeof(int));
+    if (*returnColumnSizes == NULL) { 
+        // 内存分配失败，释放所有资源
+        free(lists);
+        for(int k=0; k<strsSize; ++k) if(sorted_strs_keys[k]) free(sorted_strs_keys[k]); free(sorted_strs_keys);
+        for(int k=0; k<hash_table_capacity; ++k) freeAnagramGroup_C(&ht[k]); free(ht);
+        fprintf(stderr, "malloc failed for returnColumnSizes\n"); exit(EXIT_FAILURE); 
+    }
 
     int current_group_idx = 0;
-    for (int i = 0; i < ht->size; ++i) {
-        AnagramNode* current = ht->buckets[i];
-        while (current != NULL) {
-            (*returnColumnSizes)[current_group_idx] = current->count;
-            lists[current_group_idx] = (char**)malloc(current->count * sizeof(char*));
+    for (int i = 0; i < hash_table_capacity; ++i) {
+        if (ht[i].sorted_key != NULL) { // 找到一个有效组
+            (*returnColumnSizes)[current_group_idx] = ht[i].count;
+            lists[current_group_idx] = (char**)malloc(ht[i].count * sizeof(char*));
             if (lists[current_group_idx] == NULL) {
-                // 内存分配失败，需要释放前面已分配的 lists[k]
+                // 内存分配失败，释放前面已分配的 lists[k]
                 for(int k=0; k<current_group_idx; ++k) free(lists[k]);
-                free(lists); free(*returnColumnSizes); freeHashTable(ht);
-                fprintf(stderr, "malloc failed\n"); exit(EXIT_FAILURE);
+                free(lists); free(*returnColumnSizes); 
+                for(int k=0; k<strsSize; ++k) if(sorted_strs_keys[k]) free(sorted_strs_keys[k]); free(sorted_strs_keys);
+                for(int k=0; k<hash_table_capacity; ++k) freeAnagramGroup_C(&ht[k]); free(ht);
+                fprintf(stderr, "malloc failed for lists[%d]\n", current_group_idx); exit(EXIT_FAILURE);
             }
-            for (int j = 0; j < current->count; ++j) {
-                lists[current_group_idx][j] = strs[current->original_indices[j]]; // 引用原始字符串
+            for (int j = 0; j < ht[i].count; ++j) {
+                lists[current_group_idx][j] = strs[ht[i].original_indices[j]]; // 引用原始字符串
             }
             current_group_idx++;
-            current = current->next;
         }
     }
 
-    freeHashTable(ht); // 释放哈希表本身
+    // 5. 释放所有辅助内存
+    for(int i = 0; i < strsSize; ++i) { // 释放 sorted_strs_keys 数组中的每个字符串
+        if(sorted_strs_keys[i]) free(sorted_strs_keys[i]);
+    }
+    free(sorted_strs_keys); // 释放 sorted_strs_keys 数组本身
+
+    for (int i = 0; i < hash_table_capacity; ++i) { // 释放哈希表中的每个键和索引数组
+        freeAnagramGroup_C(&ht[i]); // 使用辅助函数释放
+    }
+    free(ht); // 释放哈希表本身
     
     return lists;
 }
@@ -258,39 +266,21 @@ char*** groupAnagrams(char** strs, int strsSize, int* returnSize, int** returnCo
 ```c++
 class Solution {
 public:
-    std::vector<std::vector<std::string>> groupAnagrams(std::vector<std::string>& strs) {
-        std::unordered_map<std::string, std::vector<std::string>> hash_table;
+    vector<vector<string>> groupAnagrams(vector<string>& strs) {
+        unordered_map<string, vector<string>> hash; // 使用 C++ STL 的 unordered_map
 
         // 遍历输入字符串列表
-        for (const auto& str : strs) { // 使用 const 引用，避免不必要的字符串拷贝
-            // 字符计数法生成键：O(K) 时间复杂度
-            int counts[26] = { 0 }; // 固定大小数组，用于统计 'a' 到 'z' 的频率
-            for (char c : str) {    // 遍历当前字符串的每个字符
-                counts[c - 'a']++;  // 统计频率
-            }
-
-            // 构建规范化键字符串
-            // 格式示例: "#1#0#2#0...#" (a出现1次, b出现0次, c出现2次...)
-            std::string key_builder; 
-            for (int i = 0; i < 26; ++i) { // 遍历所有 26 个字母的频率
-                key_builder.push_back((char)('a' + i)); // 添加字符本身
-                key_builder += std::to_string(counts[i]); // 将频率转换为字符串并追加
-                // 例如: "a1b0c2"
-                // 这样做比 '#1#0#2' 更简洁，并且不会因为频率是多位数而错误。
-            }
-
-            // 将原始字符串添加到对应键的列表中
-            hash_table[key_builder].push_back(str); 
+        for (auto& str: strs) {
+            string nstr = str; // 复制原始字符串
+            sort(nstr.begin(), nstr.end()); // 对副本进行排序，生成规范化键
+            hash[nstr].push_back(str); // 将原始字符串添加到对应键的列表中
         }
 
+        vector<vector<string>> res;
         // 遍历哈希表，将所有值（即异位词列表）收集到结果集中
-        std::vector<std::vector<std::string>> result;
-        // 使用 const auto& 避免拷贝
-        for (const auto& pair : hash_table) {
-            result.push_back(pair.second);
-        }
+        for (auto& item : hash) res.push_back(item.second);
 
-        return result;
+        return res; // 返回结果
     }
 };
 ```
