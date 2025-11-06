@@ -1,0 +1,30 @@
+https://www.nowcoder.com/exam/oj?page=1&tab=SQL%E7%AF%87&topicId=375
+`SQL94`
+
+```sql
+SELECT
+    i.EMPLOYEE_ID,
+    CASE 
+        WHEN i.LAST_UPDATE_DT >= u.UPDATE_DT THEN i.POSITION 
+        ELSE u.NEW_POSITION 
+    END AS POSITION,
+    CASE 
+        WHEN i.LAST_UPDATE_DT >= u.UPDATE_DT THEN i.LAST_UPDATE_DT 
+        ELSE u.UPDATE_DT 
+    END AS LAST_UPDATE_DT
+FROM 
+    EMPLOYEE_INFO i
+JOIN (
+    SELECT
+        EMPLOYEE_ID,
+        ROW_NUMBER() OVER (PARTITION BY EMPLOYEE_ID ORDER BY UPDATE_DT DESC) AS rk,
+        UPDATE_DT,
+        NEW_POSITION
+    FROM
+        EMPLOYEE_UPDATE
+) u ON i.EMPLOYEE_ID = u.EMPLOYEE_ID
+WHERE 
+    rk = 1
+ORDER BY
+    EMPLOYEE_ID ASC;
+```
