@@ -20,7 +20,6 @@
 
 ---
 
-
 ### Way Of C++
 
 > source code
